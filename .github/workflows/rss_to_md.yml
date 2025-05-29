@@ -1,0 +1,33 @@
+name: Fetch RSS Feed
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # every 10 minutes
+  workflow_dispatch:        # allow manual trigger
+
+jobs:
+  fetch-feed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install feedparser markdownify
+
+      - name: Run RSS fetch script
+        run: |
+          python fetch_rss.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add rss-posts/
+          git commit -m "Add new RSS posts [auto]" || echo "No changes to commit"
+          git push
