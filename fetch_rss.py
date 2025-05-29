@@ -1,36 +1,31 @@
 import feedparser
 from markdownify import markdownify as md
-from datetime import datetime
 import os
 import hashlib
 
-# 🔁 Replace with your actual RSS feed URL
-FEED_URL = "https://plantbagh.blogspot.com/feeds/posts/default?alt=rss"
-POST_DIR = "rss-posts"
+# RSS feed URL (update this!)
+rss_url = "https://www.plantbagh.com/feeds/posts/default?alt=rss"
 
-feed = feedparser.parse(FEED_URL)
+# Create folder
+os.makedirs("rss-posts", exist_ok=True)
 
-os.makedirs(POST_DIR, exist_ok=True)
+# Parse RSS
+feed = feedparser.parse(rss_url)
 
 for entry in feed.entries:
     title = entry.title
     link = entry.link
     published = entry.published
-    content = entry.get("content", [{}])[0].get("value", entry.get("summary", ""))
+    content = entry.get("content", [{"value": ""}])[0]["value"]
 
-    # Format filename like 2025-05-29-title.md
-    date_obj = datetime.strptime(published, '%a, %d %b %Y %H:%M:%S %z')
-    slug = "-".join(title.lower().split())[:50]
-    filename = f"{POST_DIR}/{date_obj.strftime('%Y-%m-%d')}-{slug}.md"
+    # Generate a unique filename based on the link
+    filename = hashlib.md5(link.encode()).hexdigest()[:8]
+    md_filename = f"rss-posts/{published[:10]}-{filename}.md"
 
-    # Skip if file already exists
-    if os.path.exists(filename):
-        continue
+    if not os.path.exists(md_filename):
+        with open(md_filename, "w", encoding="utf-8") as f:
+            f.write(f"# [{title}]({link})\n")
+            f.write(f"**Published**: {published}\n\n")
+            f.write(md(content))
 
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(f"# {title}\n")
-        f.write(f"*Published on {date_obj.strftime('%Y-%m-%d')}*\n\n")
-        f.write(md(content))
-        f.write(f"\n\n[Read more]({link})")
-
-print("✅ RSS fetch complete.")
+print("RSS posts saved to 'rss-posts/' folder.")
