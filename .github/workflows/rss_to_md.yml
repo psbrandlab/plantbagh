@@ -1,36 +1,36 @@
-name: Fetch Blogger RSS and Save as Markdown
+name: Fetch blog RSS and convert to markdown
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Every 10 minutes
-  workflow_dispatch:
+    - cron: "0 * * * *" # every hour
+  workflow_dispatch: # allow manual run
 
 jobs:
   fetch-blog:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: '3.10'
 
-      - name: Install Feedparser
+      - name: Install feedparser
         run: pip install feedparser
 
-      - name: Fetch and Convert RSS to Markdown
+      - name: Fetch RSS and convert to markdown
         run: |
-          mkdir -p rss-posts
-          python fetch_rss.py
+          python scripts/rss_to_md.py
 
-      - name: Commit and Push Changes
+      - name: Commit and push changes
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add -A
-          git commit -m "Add new RSS posts" || echo "Nothing to commit"
-          git pull origin main --rebase
-          git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/psbrandlab/plantbagh.git main
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add rss-posts/
+          git commit -m "Add new RSS posts" || echo "No changes to commit"
+          git push
