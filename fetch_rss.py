@@ -1,17 +1,30 @@
 import feedparser
 import os
+import hashlib
 from datetime import datetime
 
-rss_url = 'https://www.plantbagh.com/feeds/posts/default?alt=rss'
-feed = feedparser.parse(rss_url)
+# CHANGE THIS TO YOUR BLOGGER RSS FEED
+RSS_FEED_URL = 'https://plantbagh.blogspot.com/feeds/posts/default?alt=rss'
+OUTPUT_DIR = 'rss-posts'
+MAX_POSTS = 20  # change as needed
 
-for entry in feed.entries:
-    title = entry.title.replace(" ", "-").replace("/", "-")
-    pub_date = datetime(*entry.published_parsed[:6]).strftime("%Y-%m-%d")
-    filename = f"rss-posts/{pub_date}-{title}.md"
+feed = feedparser.parse(RSS_FEED_URL)
 
-    if not os.path.exists(filename):
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(f"# [{entry.title}]({entry.link})\n\n")
-            f.write(f"_Published: {entry.published}_\n\n")
-            f.write(f"{entry.summary}")
+def slugify(title):
+    return ''.join(c if c.isalnum() or c in [' ', '-', '_'] else '-' for c in title).strip().replace(' ', '-')
+
+for entry in feed.entries[:MAX_POSTS]:
+    title = entry.title
+    published = entry.published
+    date = datetime.strptime(published, '%a, %d %b %Y %H:%M:%S %z').strftime('%Y-%m-%d')
+    slug = slugify(title)
+    filename = f"{date}-{slug}.md"
+    filepath = os.path.join(OUTPUT_DIR, filename)
+
+    if not os.path.exists(filepath):
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(f"# {title}\n\n")
+            f.write(f"*Published on {published}*\n\n")
+            f.write(entry.summary)
+
+print("RSS posts saved to:", OUTPUT_DIR)
