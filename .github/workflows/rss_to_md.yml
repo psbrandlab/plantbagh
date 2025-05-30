@@ -33,4 +33,5 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add rss-posts/
           git commit -m "Add new RSS posts" || echo "No changes to commit"
-          git push
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/psbrandlab/plantbagh.git
+          git push origin main
